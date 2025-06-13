@@ -66,6 +66,7 @@ resource "aws_api_gateway_integration_response" "lambda" {
     "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,OPTIONS'"
     "method.response.header.Access-Control-Allow-Origin"  = "'*'"
   }
+  depends_on = [aws_api_gateway_method_response.this]
 }
 
 resource "aws_api_gateway_integration_response" "mock" {
@@ -81,4 +82,5 @@ resource "aws_api_gateway_integration_response" "mock" {
     "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,OPTIONS'"
     "method.response.header.Access-Control-Allow-Origin"  = "'*'"
   }
+  depends_on = [aws_api_gateway_method_response.this]
 }
