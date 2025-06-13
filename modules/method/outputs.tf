@@ -1,26 +1,31 @@
-output "integrations" {
-  value = [for integration in aws_api_gateway_integration.this : integration]
+# Métodos (GET, POST, PUT, OPTIONS, etc.)
+output "methods" {
+  value = [for m in aws_api_gateway_method.this : {
+    http_method = m.http_method
+    resource_id = m.resource_id
+  }]
+}
+
+output "method_configs" {
+  value = [for m in aws_api_gateway_method.this : {
+    http_method = m.http_method
+    resource_id = m.resource_id
+  }]
 }
 
 output "method_ids" {
   value = aws_api_gateway_method.this
 }
 
-output "integration_ids" {
-  value = aws_api_gateway_integration.this
-}
-
 output "method_resources" {
   value = [for m in aws_api_gateway_method.this : m.id]
 }
 
-output "integration_resources" {
-  value = aws_api_gateway_integration.this
+# Integrações por tipo (lambda e mock)
+output "integrations_lambda" {
+  value = aws_api_gateway_integration.lambda
 }
 
-output "methods" {
-  value = [for m in aws_api_gateway_method.this : {
-    http_method = m.http_method
-    resource_id = m.resource_id
-  }]
+output "integrations_mock" {
+  value = aws_api_gateway_integration.mock
 }

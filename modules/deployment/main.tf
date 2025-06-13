@@ -11,7 +11,7 @@ resource "aws_api_gateway_deployment" "this" {
 }
 
 resource "aws_api_gateway_stage" "this" {
-  rest_api_id   = var.rest_api_id
   deployment_id = aws_api_gateway_deployment.this.id
+  rest_api_id   = var.rest_api_id
   stage_name    = var.stage_name
 }

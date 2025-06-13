@@ -43,16 +43,18 @@ resource "null_resource" "wait_for_methods" {
 
 locals {
   method_configs = flatten([
-    for method in module.hello_methods.methods : {
+    for method in module.hello_methods.method_configs : {
       http_method = method.http_method
       resource_id = method.resource_id
     }
   ])
 }
 
+
 module "deployment" {
   source         = "./modules/deployment"
-  rest_api_id    = module.api.rest_api_id
+  rest_api_id    = module.api.id
   stage_name     = "dev"
   method_configs = local.method_configs
+
 }
