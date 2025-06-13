@@ -15,3 +15,8 @@ variable "method_configs" {
   }))
   description = "Lista de métodos e recursos para cálculo de hash e trigger do deployment"
 }
+
+variable "triggers_sha" {
+  description = "Hash trigger para forçar novo deployment quando métodos mudam"
+  type        = string
+}

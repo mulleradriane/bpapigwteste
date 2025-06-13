@@ -30,7 +30,7 @@ module "hello_methods" {
   resource_id   = module.hello_resource.id
   lambda_uri    = module.lambda_hello.uri
   authorization = "NONE"
-  methods       = ["GET", "POST", "OPTIONS", "PUT"]
+  methods       = ["GET", "POST", "PUT", "OPTIONS", "DELETE", "PATCH", "HEAD"]
 }
 
 
@@ -52,9 +52,13 @@ locals {
 
 
 module "deployment" {
-  source         = "./modules/deployment"
-  rest_api_id    = module.api.id
-  stage_name     = "dev"
-  method_configs = local.method_configs
+  source      = "./modules/deployment"
+  rest_api_id = module.api.id
+  stage_name  = "dev"
+  method_configs = module.hello_methods.method_configs
 
+  triggers_sha = sha1(jsonencode(module.hello_methods.method_configs))
+
+  depends_on = [module.hello_methods]
 }
+

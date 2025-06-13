@@ -18,6 +18,8 @@ resource "aws_api_gateway_integration" "lambda" {
   uri                     = var.lambda_uri
   connection_type         = "INTERNET"
   timeout_milliseconds    = 29000
+
+  depends_on = [aws_api_gateway_method.this]
 }
 
 resource "aws_api_gateway_integration" "mock" {

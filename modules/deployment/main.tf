@@ -2,13 +2,14 @@ resource "aws_api_gateway_deployment" "this" {
   rest_api_id = var.rest_api_id
 
   triggers = {
-    redeploy = sha1(jsonencode(var.method_configs))
+    redeploy = var.triggers_sha
   }
 
   lifecycle {
     create_before_destroy = true
   }
 }
+
 
 resource "aws_api_gateway_stage" "this" {
   deployment_id = aws_api_gateway_deployment.this.id
