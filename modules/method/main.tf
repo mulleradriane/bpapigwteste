@@ -37,6 +37,8 @@ resource "aws_api_gateway_method" "this" {
   api_key_required   = false
   request_parameters = local.merged_request_params[each.key]
   request_models     = each.value.request_models
+  request_validator_id = try(aws_api_gateway_request_validator.this[each.key].id, null)
+
 }
 
 # ---------- Integration ----------
@@ -93,7 +95,12 @@ resource "aws_api_gateway_integration_response" "default" {
 
 # ---------- CORS ----------
 resource "aws_api_gateway_method_response" "cors" {
-  for_each    = { for k, v in var.methods : k => v if v.enable_cors }
+  for_each = {
+    for k, v in var.methods :
+    k => v
+    if v.enable_cors && !contains(keys(try(var.method_responses[k], {})), "200")
+  }
+
   rest_api_id = var.rest_api_id
   resource_id = var.resource_id
   http_method = each.key
@@ -116,8 +123,16 @@ resource "aws_api_gateway_method_response" "cors" {
   depends_on = [aws_api_gateway_method.this]
 }
 
+
 resource "aws_api_gateway_integration_response" "cors" {
-  for_each    = { for k, v in var.methods : k => v if v.enable_cors }
+  for_each = {
+    for method_name, method_config in var.methods :
+    method_name => method_config
+    if method_config.enable_cors &&
+       !contains(keys(try(var.method_responses[method_name], {})), "200") &&
+       !contains(keys(try(var.integration_response_selection_patterns[method_name], {})), "200")
+  }
+
   rest_api_id = var.rest_api_id
   resource_id = var.resource_id
   http_method = each.key
@@ -133,8 +148,15 @@ resource "aws_api_gateway_integration_response" "cors" {
     "application/json" = ""
   }
 
-  depends_on = [aws_api_gateway_integration.this]
+  depends_on = [
+    aws_api_gateway_integration.this,
+    aws_api_gateway_method_response.cors,
+    aws_api_gateway_method_response.custom,
+  ]
 }
+
+
+
 
 # ---------- Custom Responses ----------
 resource "aws_api_gateway_method_response" "custom" {
@@ -155,16 +177,30 @@ resource "aws_api_gateway_method_response" "custom" {
 }
 
 resource "aws_api_gateway_integration_response" "custom" {
-  for_each = local.all_responses
+  for_each = {
+    for k, v in local.all_responses :
+    "${v.method}_${v.status}" => v
+    if !(v.status == "200")
+  }
 
   rest_api_id        = var.rest_api_id
   resource_id        = var.resource_id
   http_method        = each.value.method
   status_code        = each.value.status
-
-  selection_pattern = each.value.status != "200" ? ".*" : null
-  
   response_templates = each.value.config.response_templates
+  selection_pattern  = try(each.value.config.selection_pattern, null)
 
   depends_on = [aws_api_gateway_integration.this]
+}
+
+
+
+resource "aws_api_gateway_request_validator" "this" {
+  for_each    = var.request_validators
+  name        = "${each.key}-request-validator"
+  rest_api_id = var.rest_api_id
+
+  validate_request_body       = can(regex("body", lower(each.value)))
+  validate_request_parameters = can(regex("parameters|query|header", lower(each.value)))
+
 }

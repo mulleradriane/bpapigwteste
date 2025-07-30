@@ -41,8 +41,7 @@ module "hello_methods" {
 
   methods = {
     "GET" = {
-      integration_type = "AWS_PROXY"
-
+      integration_type        = "AWS_PROXY"
       uri                     = module.lambda_hello.uri
       integration_http_method = "POST"
       proxy                   = true
@@ -57,13 +56,22 @@ module "hello_methods" {
       uri                     = "https://httpbin.org/post"
       integration_http_method = "POST"
       enable_cors             = true
+
+      request_models = {
+        "application/json" = "Empty"
+      }
     }
+  }
+
+  request_validators = {
+    "POST" = "Validate body"
   }
 
   cors_allow_methods = "'GET,POST,OPTIONS'"
   cors_allow_origin  = "'*'"
   cors_allow_headers = "'Authorization,Content-Type'"
 }
+
 
 module "item_resource" {
   source      = "./modules/resource"
@@ -88,21 +96,20 @@ module "item_methods" {
   methods = {
     "GET" = {
       integration_type        = "HTTP"
-      uri                     = "https://httpbin.org/anything"
+      uri                     = "https://httpbin.org/status/404"
       integration_http_method = "GET"
       enable_cors             = true
 
       request_parameters = {
-        path   = { id = true } # obrigatório /items/{id}
-        query  = { sort = false }
-        header = { Authorization = true }
+        path   = { id = true }
+        query  = {}
+        header = {}
       }
 
       request_templates = {
         "application/json" = <<EOF
 {
-  "requestedId": "$input.params('id')",
-  "sort": "$input.params('sort')"
+  "requestedId": "$input.params('id')"
 }
 EOF
       }
@@ -115,20 +122,28 @@ EOF
 
   method_responses = {
     GET = {
+      "200" = {
+        response_models = {
+          "application/json" = "Empty"
+        }
+      },
       "404" = {
         response_models = {
           "application/json" = "Empty"
         }
         response_templates = {
           "application/json" = jsonencode({
-            message = "Item not found",
+            message = "Not Found",
             code    = 404
           })
         }
-        response_parameters = {
-          "method.response.header.Content-Type" = true
-        }
       }
+    }
+  }
+
+  integration_response_selection_patterns = {
+    GET = {
+      "404" = ".*NotFound.*"
     }
   }
 

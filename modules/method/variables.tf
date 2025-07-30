@@ -41,9 +41,11 @@ variable "method_responses" {
     response_models     = optional(map(string), {})
     response_templates  = optional(map(string), {})
     response_parameters = optional(map(string), {})
+    selection_pattern   = optional(string)
   })))
   default = {}
 }
+
 
 # CORS configuráveis
 variable "cors_allow_headers" {
@@ -59,4 +61,16 @@ variable "cors_allow_methods" {
 variable "cors_allow_origin" {
   type    = string
   default = "'*'"
+}
+
+variable "request_validators" {
+  description = "Mapa de validadores por método"
+  type = map(string)
+  default = {}
+}
+
+variable "integration_response_selection_patterns" {
+  description = "Mapeia selection_pattern para integration_response por método e status code"
+  type = map(map(string))
+  default = {}
 }
